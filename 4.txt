@@ -1,0 +1,236 @@
+1)***************************************************************************
+
+#include<stdio.h>
+#include<stdlib.h>       
+
+
+long memory[1000] ;
+int pc , opcode , reg , address ;
+int registers[4] , flag[] = {0,0,0,0,0,1};
+long op1 , op2 ;
+
+main(char *argv[] , int argc)
+{
+	FILE *fp ;
+	int k ;
+		fp = fopen("filename","r") ;
+		if(fp==NULL)
+		{
+			printf("Invalid file name.") ;
+			exit(0) ;
+		}
+		else
+		{	
+			pc = 0 ;
+				
+			while(!feof(fp))
+				fscanf(fp,"%ld",&memory[pc++]) ;
+			k = pc-1 ;
+			
+			pc=0 ;
+			
+			while(1) 
+			{	
+				opcode = memory[pc]/10000 ;
+				reg = ((memory[pc]%10000)/1000) ;
+				address = (memory[pc]%10000)%1000 ;
+				
+				switch(opcode)
+				{
+					case 0 :
+						exit(0) ;
+					break ;
+					
+					case 3 :	
+						registers[reg]+=memory[address] ;
+					break ;
+					
+					case 4 :	
+						registers[reg]-=memory[address] ;
+					break ;
+					
+					case 7 :	
+						registers[reg]*=memory[address] ;
+					break ;      	
+					
+					case 5 :	
+						registers[reg]=memory[address] ;
+					break ;
+					
+					case 6 :	
+						memory[address]=registers[reg] ;
+					break ;
+					
+					case 10 :	
+						op1 = registers[reg] ;
+						op2 = memory[address] ;
+					break ;
+										
+					case 9 :	
+						address = address-1 ;
+						
+						switch(reg)
+						{
+							case 0 :
+								if(op1>op2)
+									pc = address ;
+								printf("\n%daddress : ",pc) ;
+							break ;
+							
+							case 1 :
+								if(op1>=op2)
+									pc = address ;
+							break ;
+							
+							case 2 :
+								if(op1==op2)
+									pc = address ;
+							break ;
+							
+							case 3 :
+								if(op1<op2)
+									pc = address ;
+							break ;
+							
+							case 4 :
+								if(op1<=op2)
+									pc = address ;
+							break ;
+							
+							case 5 :
+								pc = address ;
+							break ;
+						}
+					break ;
+					
+					case 8 :	
+						memory[address]/=registers[reg] ;
+					break ;
+					
+					case 1 :	
+						printf("Enter the value : ") ;
+						scanf("%ld",&memory[address]) ;
+					break ;
+					
+					case 2 :	
+					  if(memory[address]==1)
+						
+					    printf("Number 1 is greater\n");
+					  else
+					    printf("Number 2 is greater\n");
+					break ;
+				}
+				pc++ ;
+			}
+		}
+	return 0 ;
+}
+
+
+2)******************************************
+
+#include<stdio.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<unistd.h>
+#include<dirent.h>
+#include<fcntl.h>
+
+void
+list (char c, char *dn)
+{
+  DIR *dir;
+  int cnt = 0;
+  struct dirent *entry;
+  struct stat buff;
+  if ((dir = opendir (dn)) == NULL)
+    {
+      printf ("Directory %s not found\n", dn);
+      return;
+    }
+    
+  switch (c)
+    {
+    case 'f':
+      while ((entry = readdir (dir)) != NULL)
+		{													
+	  	stat (entry->d_name, &buff);
+	  	if (S_IFREG & buff.st_mode)
+	    printf ("%s\n", entry->d_name);
+		}
+      break;
+      
+      
+    case 'n':
+      	while ((entry = readdir (dir)) != NULL)			
+			cnt++;
+      		printf ("Total No.of Entries = %d\n", cnt);
+      		break;
+      		
+    case 'i':
+      		while ((entry = readdir (dir)) != NULL)
+			{												
+	  			stat (entry->d_name, &buff);
+	  			if (S_IFREG & buff.st_mode)
+	    		printf ("%s\t%d\n", entry->d_name, buff.st_ino);
+			}
+      		break;
+    default:
+      printf ("Invalid argument...\n");
+    }
+  closedir (dir);
+}
+
+main ()
+{
+  char command[80], t1[20], t2[20], t3[20], t4[20];
+  int n;
+  system ("clear");
+  while (1)
+    {
+      printf ("myShell$");			
+      fflush (stdin);
+      fgets (command, 80, stdin);		
+      n = sscanf (command, "%s %s %s %s", t1, t2, t3, t4);		
+      
+	  switch (n)
+		{
+			case 1:
+	  			if (!fork ())			
+	    			{
+	      				execlp (t1, t1, NULL);		
+	      				perror (t1);
+	    			}
+	  		break;
+			
+			case 2:
+	  			if (!fork ())
+	    			{
+	      				execlp (t1, t1, t2, NULL);
+	      				perror (t1);
+	    			}
+	  			break;
+			
+			case 3:
+	  			if (strcmp (t1, "list") == 0)
+	    			list (t2[0], t3);
+	  			else
+	    		{
+	      		if (!fork ())
+					{
+		  			execlp (t1, t1, t2, t3, NULL);
+		  			perror (t1);
+					}
+	    		}
+	    	break;
+	
+			case 4:
+	  			if (!fork ())
+	   				 {
+	      				execlp (t1, t1, t2, t3, t4, NULL);
+	      				perror (t1);
+	    			}
+	    		break;
+	}
+    }
+}
